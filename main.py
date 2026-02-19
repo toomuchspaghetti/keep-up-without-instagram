@@ -16,6 +16,7 @@ NEW_IMAGE_FILENAME: Final = "new.png"
 
 def send_notification(bot: ExtBot, chat_id: int):
     asyncio.run(bot.send_message(chat_id, "you have a notification from instagram!"))
+    # TODO send photo
 
 def load_image(filename: str):
     try:
