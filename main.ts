@@ -2,11 +2,13 @@ import puppeteer from 'puppeteer-core';
 import 'dotenv/config'
 
 let instagram_session_id: string | undefined;
+let chromium_path: string | undefined;
 
 try {
     instagram_session_id = process.env["INSTAGRAM_SESSION_ID"]
+    chromium_path = process.env["CHROMIUM_PATH"]
 
-    if (instagram_session_id === undefined) {
+    if (instagram_session_id === undefined || chromium_path === undefined) {
         throw Error()
     }
 } catch {
@@ -15,7 +17,7 @@ try {
 }
 
 const browser = await puppeteer.launch({
-    executablePath: "/usr/bin/chromium",
+    executablePath: chromium_path,
 });
 
 try {
@@ -59,7 +61,7 @@ try {
         clip: {
             x: 87,
             y: 0,
-            width: 13,
+            width: 300,
             height: 10000,
         },
         captureBeyondViewport: false

@@ -14,9 +14,12 @@ WORK_DIR: Final = "work"
 OLD_IMAGE_FILENAME: Final = "old.png"
 NEW_IMAGE_FILENAME: Final = "new.png"
 
+async def send_notification_async(bot: ExtBot, chat_id: int):
+    await bot.send_message(chat_id, "you have a notification from instagram!")
+    await bot.send_photo(chat_id, open(os.path.join(WORK_DIR, NEW_IMAGE_FILENAME), "rb"))
+
 def send_notification(bot: ExtBot, chat_id: int):
-    asyncio.run(bot.send_message(chat_id, "you have a notification from instagram!"))
-    # TODO send photo
+    asyncio.run(send_notification_async(bot, chat_id))
 
 def load_image(filename: str):
     try:
@@ -49,20 +52,21 @@ def main():
             if result == None:
                 raise Exception("cannot find \"success\", node script failed")
 
-            old_image = load_image(OLD_IMAGE_FILENAME)
-            
-            if old_image != None:
-                new_image = load_image(NEW_IMAGE_FILENAME)
+            new_image = load_image(NEW_IMAGE_FILENAME)
 
-                if new_image == None:
-                    raise Exception("cannot find new image, node script is buggy!")
-                
+            if new_image == None:
+                raise Exception("cannot find new image, node script is buggy!")
+            
+            new_image = new_image.crop((0, 0, 13, new_image.height))
+            
+            old_image = load_image(OLD_IMAGE_FILENAME)
+            if old_image != None:
                 difference_image = ImageChops.difference(old_image, new_image)
 
                 if difference_image.getbbox() != None:
                     send_notification_quick(ApplicationBuilder().token(TELEGRAM_TOKEN).build().bot)
 
-            os.rename(os.path.join(WORK_DIR, NEW_IMAGE_FILENAME), os.path.join(WORK_DIR, OLD_IMAGE_FILENAME))
+            new_image.save(os.path.join(WORK_DIR, OLD_IMAGE_FILENAME))
         except Exception as e:
             print(f"whoops! error: {e}")
             raise
