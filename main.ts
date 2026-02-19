@@ -1,8 +1,7 @@
-import puppeteer, { ElementHandle, JSHandle } from 'puppeteer-core';
+import puppeteer from 'puppeteer-core';
 import 'dotenv/config'
-import { setTimeout } from 'node:timers/promises'
 
-let instagram_session_id;
+let instagram_session_id: string | undefined;
 
 try {
     instagram_session_id = process.env["INSTAGRAM_SESSION_ID"]

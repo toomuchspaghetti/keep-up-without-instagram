@@ -7,7 +7,6 @@ from time import sleep
 from datetime import datetime
 import subprocess
 from PIL import Image, ImageChops
-import io
 import re
 
 SLEEP_SECONDS: Final = 5 * 60
