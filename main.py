@@ -9,10 +9,11 @@ import subprocess
 from PIL import Image, ImageChops
 import re
 
-SLEEP_SECONDS: Final = 5 * 1
+SLEEP_SECONDS: Final = 5 * 60
 WORK_DIR: Final = "work"
 OLD_IMAGE_FILENAME: Final = "old.png"
 NEW_IMAGE_FILENAME: Final = "new.png"
+MODE: Final = "RGB"
 
 def get_file_from_work_dir(filename: str) -> str:
     return os.path.join(WORK_DIR, filename)
@@ -23,6 +24,7 @@ async def send_notification_async(bot: ExtBot, chat_id: int):
     except Exception:
         await bot.send_message(chat_id, "oops! cannot send photo... but your instagram has updated")
         raise Exception("cannot send photo")
+    
 
 def send_notification(bot: ExtBot, chat_id: int):
     asyncio.run(send_notification_async(bot, chat_id))
@@ -51,33 +53,36 @@ def main():
 
     while True:
         try:
-            print(f"trying... {datetime.now().astimezone().isoformat()}")
+            try:
+                print(f"trying... {datetime.now().astimezone().isoformat()}")
 
-            result = re.search(r"success", subprocess.run(["node", "main.ts"], capture_output=True).stdout.decode())
+                result = re.search(r"success", subprocess.run(["node", "main.ts"], capture_output=True).stdout.decode())
 
-            if result == None:
-                raise Exception("cannot find \"success\", node script failed")
+                if result == None:
+                    raise Exception("cannot find \"success\", node script failed")
 
-            new_image = load_image(NEW_IMAGE_FILENAME)
+                new_image = load_image(NEW_IMAGE_FILENAME)
 
-            if new_image == None:
-                raise Exception("cannot find new image, node script is buggy!")
-            
-            new_image = new_image.crop((0, 0, 13, new_image.height))
-            
-            old_image = load_image(OLD_IMAGE_FILENAME)
-            if old_image != None:
-                difference_image = ImageChops.difference(old_image, new_image)
+                if new_image == None:
+                    raise Exception("cannot find new image, node script is buggy!")
+                
+                new_image = new_image.crop((0, 0, 13, new_image.height)).convert(MODE)
+                
+                old_image = load_image(OLD_IMAGE_FILENAME).convert(MODE)
+                if old_image != None:
+                    difference_image = ImageChops.difference(old_image, new_image)
 
-                if difference_image.getbbox() != None:
-                    print("saw difference, sending notification.")
-                    send_notification_quick(ApplicationBuilder().token(TELEGRAM_TOKEN).build().bot)
+                    if difference_image.getbbox() != None:
+                        print("saw difference, sending notification.")
+                        send_notification_quick(ApplicationBuilder().token(TELEGRAM_TOKEN).build().bot)
 
-            new_image.save(get_file_from_work_dir(OLD_IMAGE_FILENAME))
-        except Exception as e:
-            print(f"whoops! error: {e}")
+                new_image.save(get_file_from_work_dir(OLD_IMAGE_FILENAME))
+            except Exception as e:
+                print(f"whoops! error: {e}")
 
-        sleep(SLEEP_SECONDS)
-
+            sleep(SLEEP_SECONDS)
+        except KeyboardInterrupt:
+            print("\nquitting...")
+            return
 if __name__ == "__main__":
     main()
