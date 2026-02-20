@@ -9,23 +9,29 @@ import subprocess
 from PIL import Image, ImageChops
 import re
 
-SLEEP_SECONDS: Final = 5 * 60
+SLEEP_SECONDS: Final = 5 * 1
 WORK_DIR: Final = "work"
 OLD_IMAGE_FILENAME: Final = "old.png"
 NEW_IMAGE_FILENAME: Final = "new.png"
 
+def get_file_from_work_dir(filename: str) -> str:
+    return os.path.join(WORK_DIR, filename)
+
 async def send_notification_async(bot: ExtBot, chat_id: int):
-    await bot.send_message(chat_id, "you have a notification from instagram!")
-    await bot.send_photo(chat_id, open(os.path.join(WORK_DIR, NEW_IMAGE_FILENAME), "rb"))
+    try:
+        await bot.send_photo(chat_id, open(get_file_from_work_dir(NEW_IMAGE_FILENAME), "rb"), caption="your instagram has updated!")
+    except Exception:
+        await bot.send_message(chat_id, "oops! cannot send photo... but your instagram has updated")
+        raise Exception("cannot send photo")
 
 def send_notification(bot: ExtBot, chat_id: int):
     asyncio.run(send_notification_async(bot, chat_id))
 
 def load_image(filename: str):
     try:
-        return Image.open(os.path.join(WORK_DIR, filename))
+        return Image.open(get_file_from_work_dir(filename))
     except Exception:
-        return
+        raise Exception(f"cannot load image \"{filename}\"")
 
 def main():
     try:
@@ -36,7 +42,7 @@ def main():
         TELEGRAM_CHAT_ID: Final = int(os.environ["TELEGRAM_CHAT_ID"])
     except Exception:
         print("cannot load env")
-        exit(1)
+        return
 
     def send_notification_quick(bot: ExtBot):
         send_notification(bot, TELEGRAM_CHAT_ID)
@@ -64,12 +70,12 @@ def main():
                 difference_image = ImageChops.difference(old_image, new_image)
 
                 if difference_image.getbbox() != None:
+                    print("saw difference, sending notification.")
                     send_notification_quick(ApplicationBuilder().token(TELEGRAM_TOKEN).build().bot)
 
-            new_image.save(os.path.join(WORK_DIR, OLD_IMAGE_FILENAME))
+            new_image.save(get_file_from_work_dir(OLD_IMAGE_FILENAME))
         except Exception as e:
             print(f"whoops! error: {e}")
-            raise
 
         sleep(SLEEP_SECONDS)
 

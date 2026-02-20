@@ -35,6 +35,7 @@ try {
     await page.setViewport({width: 1920, height: 1080});
     await page.goto("https://www.instagram.com/direct/inbox/");
 
+    // delete left bar
     await page.waitForFunction(() => {
         const crappy_bar = document.body.children[6].children[0].children[0].children[1].children[0].children[0].children[0].children[0].children[0].children[0].children[0].children[0]
         
@@ -43,6 +44,8 @@ try {
         crappy_bar.remove();
         return true;
     })
+
+    // skip notifications prompt
     await page.waitForFunction(() => {
         const button = document.getElementsByTagName("button")[2]
         
@@ -53,10 +56,11 @@ try {
         button.click();
         return true;
     })
-    const handle = await page.waitForFunction(() => document.getElementsByTagName("h1")[0].parentElement.parentElement.children[2])
+
+    const messages_handle = await page.waitForFunction(() => document.getElementsByTagName("h1")[0].parentElement.parentElement.children[2])
 
     
-    await handle.screenshot({
+    await messages_handle.screenshot({
         path: "work/new.png",
         clip: {
             x: 87,
